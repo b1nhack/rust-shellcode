@@ -3,7 +3,7 @@
 use std::arch::asm;
 
 #[link_section = ".text"]
-static SHELLCODE: [u8; 113] = *include_bytes!("../../win-exec-calc-shellcode.bin");
+static SHELLCODE: [u8; 98] = *include_bytes!("../../w64-exec-calc-shellcode-func.bin");
 
 #[cfg(target_os = "windows")]
 fn main() {
