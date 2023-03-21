@@ -14,6 +14,7 @@ use windows_sys::Win32::System::Threading::{CreateRemoteThread, OpenProcess, PRO
 static SHELLCODE: [u8; 98] = *include_bytes!("../../w64-exec-calc-shellcode-func.bin");
 static SIZE: usize = SHELLCODE.len();
 
+#[cfg(target_os = "windows")]
 fn main() {
     let mut old = PAGE_READWRITE;
 
