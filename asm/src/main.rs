@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use std::arch::asm;
 
 #[link_section = ".text"]
