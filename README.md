@@ -20,7 +20,7 @@ shellcode execute locally.
 ## create_remote_thread
 
 shellcode execute remotely.  
-inject `explorer.exe` default.
+inject `explorer.exe` by default.
 1. get pid by process name using crate `sysinfo`
 2. get handle using `OpenProcess`
 3. alloc remote memory using `VirtualAllocEx`
@@ -67,7 +67,7 @@ shellcode execute locally.
 ## rtl_create_user_thread
 
 shellcode execute remotely.  
-inject `explorer.exe` default.
+inject `explorer.exe` by default.
 1. get `RtlCreateUserThread` funtion from `ntdll` using `LoadLibraryA` and `GetProcAddress`
 2. get pid by process name using crate `sysinfo`
 3. get handle using `OpenProcess`
