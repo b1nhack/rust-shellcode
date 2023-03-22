@@ -66,7 +66,8 @@ shellcode execute locally.
 
 ## rtl_create_user_thread
 
-shellcode execute remotely.
+shellcode execute remotely.  
+inject `explorer.exe` default.
 1. get `RtlCreateUserThread` funtion from `ntdll` using `LoadLibraryA` and `GetProcAddress`
 2. get pid by process name using crate `sysinfo`
 3. get handle using `OpenProcess`
