@@ -1,4 +1,4 @@
-# rust-shellcode
+# :japanese_ogre: rust-shellcode
 
 ## asm
 
