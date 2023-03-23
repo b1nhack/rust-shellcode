@@ -29,6 +29,13 @@ inject `explorer.exe` by default.
 6. execute shellcode using `CreateRemoteThread`
 7. close opened handle using `CloseHandle`
 
+## create_remote_thread_native
+
+shellcode execute remotely.  
+inject `explorer.exe` by default.  
+this is same with [create_remote_thread](#create_remote_thread), but without crate `windows-sys`  
+using crate `libloading` get functions from dlls.
+
 ## create_thread
 
 shellcode execute locally.
@@ -41,7 +48,7 @@ shellcode execute locally.
 ## create_thread_native
 
 shellcode execute locally.  
-this is same with create_thread, but without crate `windows-sys`  
+this is same with [create_thread](#create_thread), but without crate `windows-sys`  
 using crate `libloading` get functions from dlls.
 
 ## etwp_create_etw_thread
