@@ -1,5 +1,15 @@
 # :japanese_ogre:rust-shellcode
 
+* [asm](#asm)
+* [create_fiber](#create_fiber)
+* [create_remote_thread](#create_remote_thread)
+* [create_remote_thread_native](#create_remote_thread_native)
+* [create_thread](#create_thread)
+* [create_thread_native](#create_thread_native)
+* [etwp_create_etw_thread](#etwp_create_etw_thread)
+* [nt_queue_apc_thread_ex_local](#nt_queue_apc_thread_ex_local)
+* [rtl_create_user_thread](#rtl_create_user_thread)
+
 ## asm
 
 shellcode execute locally.
