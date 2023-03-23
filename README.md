@@ -7,6 +7,7 @@
 * [create_thread](#create_thread)
 * [create_thread_native](#create_thread_native)
 * [etwp_create_etw_thread](#etwp_create_etw_thread)
+* [memmap2_transmute](#memmap2_transmute)
 * [nt_queue_apc_thread_ex_local](#nt_queue_apc_thread_ex_local)
 * [rtl_create_user_thread](#rtl_create_user_thread)
 
@@ -70,6 +71,15 @@ shellcode execute locally.
 4. change memory permission to executable using `VirtualProtect`
 5. execute shellcode using `EtwpCreateEtwThread`
 6. waiting thread exit using `WaitForSingleObject`
+
+## memmap2_transmute
+
+shellcode execute locally.
+1. alloc memory using crate `memmap2`
+2. copy shellcode using `copy_from_slice` function from `MmapMut` struct
+3. change memory permission to executable using `make_exec` funtion from `MmapMut` struct
+4. convert memory pointer to fn type using `transmute`
+5. execute fn
 
 ## nt_queue_apc_thread_ex_local
 
