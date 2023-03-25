@@ -6,6 +6,7 @@
 * [create_remote_thread_native](#create_remote_thread_native)
 * [create_thread](#create_thread)
 * [create_thread_native](#create_thread_native)
+* [early_bird](#early_bird)
 * [etwp_create_etw_thread](#etwp_create_etw_thread)
 * [memmap2_transmute](#memmap2_transmute)
 * [nt_queue_apc_thread_ex_local](#nt_queue_apc_thread_ex_local)
@@ -61,6 +62,18 @@ shellcode execute locally.
 shellcode execute locally.  
 this is same with [create_thread](#create_thread), but without crate `windows-sys`  
 using crate `libloading` get functions from dlls.
+
+## early_bird
+
+shellcode execute remotely.  
+create and inject `svchost.exe` by default.
+1. create a process using `CreateProcessA`
+2. alloc remote memory using `VirtualAllocEx`
+3. copy shellcode to allocated memory using `WriteProcessMemory`
+4. change memory permission to executable using `VirtualProtectEx`
+5. execute process using `QueueUserAPC`
+6. resume process's thread using `ResumeThread`
+7. close opened handle using `CloseHandle`
 
 ## etwp_create_etw_thread
 
