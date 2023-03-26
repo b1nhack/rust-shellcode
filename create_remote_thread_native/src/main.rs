@@ -61,11 +61,12 @@ fn main() {
                 u32,
                 *mut u32,
             ) -> isize,
-        > = kernel32.get(b"CreateRemoteThread\0").expect("no CreateRemoteThread");
+        > = kernel32
+            .get(b"CreateRemoteThread\0")
+            .expect("no CreateRemoteThread");
 
-        let close_handle: Symbol<unsafe extern "C" fn(isize) -> u32> = kernel32
-            .get(b"CloseHandle")
-            .expect("no CloseHandle");
+        let close_handle: Symbol<unsafe extern "C" fn(isize) -> u32> =
+            kernel32.get(b"CloseHandle").expect("no CloseHandle");
 
         let handle = open_process(PROCESS_ALL_ACCESS, 0, pid);
 
