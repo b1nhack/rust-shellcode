@@ -12,8 +12,8 @@ use windows_sys::Win32::System::Memory::{
 };
 use windows_sys::Win32::System::Threading::{OpenProcess, PROCESS_ALL_ACCESS};
 
-static SHELLCODE: [u8; 98] = *include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-static SIZE: usize = SHELLCODE.len();
+const SHELLCODE: &[u8] = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
+const SIZE: usize = SHELLCODE.len();
 
 #[cfg(target_os = "windows")]
 fn main() {
@@ -58,7 +58,7 @@ fn main() {
             MEM_COMMIT | MEM_RESERVE,
             PAGE_READWRITE,
         );
-        if dest == null_mut() {
+        if dest.is_null() {
             eprintln!("VirtualAllocEx failed!");
             return;
         }
@@ -66,7 +66,7 @@ fn main() {
         let res = WriteProcessMemory(
             handle,
             dest,
-            SHELLCODE.as_ptr() as *const c_void,
+            SHELLCODE.as_ptr().cast(),
             SIZE,
             null_mut(),
         );

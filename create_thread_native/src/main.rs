@@ -4,8 +4,8 @@ use libloading::{Library, Symbol};
 use std::ffi::c_void;
 use std::ptr::{null, null_mut};
 
-static SHELLCODE: [u8; 98] = *include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-static SIZE: usize = SHELLCODE.len();
+const SHELLCODE: &[u8] = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
+const SIZE: usize = SHELLCODE.len();
 
 const MEM_COMMIT: u32 = 0x1000;
 const MEM_RESERVE: u32 = 0x2000;
@@ -44,12 +44,12 @@ fn main() {
             .expect("no WaitForSingleObject");
 
         let dest = virtual_alloc(null(), SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-        if dest == null_mut() {
+        if dest.is_null() {
             eprintln!("virtual_alloc failed!");
             return;
         }
 
-        rtl_copy_memory(dest, SHELLCODE.as_ptr() as *const c_void, SIZE);
+        rtl_copy_memory(dest, SHELLCODE.as_ptr().cast(), SIZE);
 
         let res = virtual_protect(dest, SIZE, PAGE_EXECUTE, &mut old);
         if res == FALSE {

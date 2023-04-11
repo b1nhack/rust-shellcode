@@ -1,4 +1,4 @@
-# :japanese_ogre:rust-shellcode
+# :japanese_ogre:rust-shellcode:japanese_ogre:
 
 * [asm](#asm)
 * [create_fiber](#create_fiber)
