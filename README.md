@@ -1,5 +1,7 @@
 # :japanese_ogre:rust-shellcode:japanese_ogre:
 
+This project provides the underlying support for bypass av of offensive activities.  
+The available Shellcode loaders include:
 * [asm](#asm)
 * [create_fiber](#create_fiber)
 * [create_remote_thread](#create_remote_thread)
@@ -11,6 +13,23 @@
 * [memmap2_transmute](#memmap2_transmute)
 * [nt_queue_apc_thread_ex_local](#nt_queue_apc_thread_ex_local)
 * [rtl_create_user_thread](#rtl_create_user_thread)
+
+## Build
+
+This is a rust project, you need install [rust](https://www.rust-lang.org/) first.  
+Then, you can build with follow command:
+
+```shell
+cargo build --release
+```
+
+Binarys in `target/release`
+
+## How to use
+
+This project is just a basic demo, you need to choose the right loading method, 
+encrypt the shellcode, download the shellcode from the internet, 
+or use it with ETW patch, unhooking, etc.
 
 ## asm
 
