@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "asm",
     "create_fiber",
+    "create_process",
     "create_remote_thread",
     "create_remote_thread_native",
     "create_thread",
@@ -11,5 +12,5 @@ members = [
     "etwp_create_etw_thread",
     "memmap2_transmute",
     "nt_queue_apc_thread_ex_local",
-    "rtl_create_user_thread"
+    "rtl_create_user_thread",
 ]

