@@ -15,7 +15,7 @@ const FALSE: i32 = 0;
 #[cfg(target_os = "windows")]
 fn main() {
     let shellcode = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-    let shellcode_size: usize = shellcode.len();
+    let shellcode_size = shellcode.len();
 
     let mut system = System::new();
     system.refresh_processes();

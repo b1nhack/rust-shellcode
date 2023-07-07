@@ -6,7 +6,7 @@ use std::mem::transmute;
 #[cfg(target_os = "windows")]
 fn main() {
     let shellcode = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-    let shellcode_size: usize = shellcode.len();
+    let shellcode_size = shellcode.len();
 
     let mut mmap = MmapOptions::new()
         .len(shellcode_size)

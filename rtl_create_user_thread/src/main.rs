@@ -15,7 +15,7 @@ use windows_sys::Win32::System::Threading::{OpenProcess, PROCESS_ALL_ACCESS};
 #[cfg(target_os = "windows")]
 fn main() {
     let shellcode = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-    let shellcode_size: usize = shellcode.len();
+    let shellcode_size = shellcode.len();
     let mut old = PAGE_READWRITE;
 
     let mut system = System::new();

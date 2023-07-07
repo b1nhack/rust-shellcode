@@ -13,7 +13,7 @@ use windows_sys::Win32::System::Threading::GetCurrentThread;
 #[cfg(target_os = "windows")]
 fn main() {
     let shellcode = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-    let shellcode_size: usize = shellcode.len();
+    let shellcode_size = shellcode.len();
 
     unsafe {
         let ntdll = LoadLibraryA(b"ntdll.dll\0".as_ptr());

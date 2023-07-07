@@ -14,7 +14,7 @@ const WAIT_FAILED: u32 = 0xFFFFFFFF;
 #[cfg(target_os = "windows")]
 fn main() {
     let shellcode = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-    let shellcode_size: usize = shellcode.len();
+    let shellcode_size = shellcode.len();
 
     unsafe {
         let kernel32 = Library::new("kernel32.dll").expect("[-]no kernel32.dll!");

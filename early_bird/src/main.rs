@@ -15,7 +15,7 @@ use windows_sys::Win32::System::Threading::{
 #[cfg(target_os = "windows")]
 fn main() {
     let shellcode = include_bytes!("../../w64-exec-calc-shellcode-func.bin");
-    let shellcode_size: usize = shellcode.len();
+    let shellcode_size = shellcode.len();
     let program = b"C:\\Windows\\System32\\calc.exe\0";
 
     unsafe {
