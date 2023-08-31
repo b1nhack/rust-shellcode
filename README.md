@@ -11,6 +11,7 @@ The available Shellcode loaders include:
 * [early_bird](#early_bird)
 * [etwp_create_etw_thread](#etwp_create_etw_thread)
 * [memmap2_transmute](#memmap2_transmute)
+* [module_stomping](#module_stomping)
 * [nt_queue_apc_thread_ex_local](#nt_queue_apc_thread_ex_local)
 * [rtl_create_user_thread](#rtl_create_user_thread)
 
@@ -62,7 +63,7 @@ SHELLCODE execute locally.
 14. close opened handle using `CloseHandle`
 
 ## create_remote_thread
-SHELLCODE execute remotely.  
+SHELLCODE execute remotely.
 inject `explorer.exe` by default.
 1. get pid by process name using crate `sysinfo`
 2. get handle using `OpenProcess`
@@ -73,7 +74,7 @@ inject `explorer.exe` by default.
 7. close opened handle using `CloseHandle`
 
 ## create_remote_thread_native
-SHELLCODE execute remotely.  
+SHELLCODE execute remotely.
 inject `explorer.exe` by default.  
 this is same with [create_remote_thread](#create_remote_thread), but without crate `windows-sys`  
 using crate `libloading` get functions from dlls.
@@ -92,7 +93,7 @@ this is same with [create_thread](#create_thread), but without crate `windows-sy
 using crate `libloading` get functions from dlls.
 
 ## early_bird
-SHELLCODE execute remotely.  
+SHELLCODE execute remotely.
 create and inject `svchost.exe` by default.
 1. create a process using `CreateProcessA`
 2. alloc remote memory using `VirtualAllocEx`
@@ -119,9 +120,27 @@ SHELLCODE execute locally.
 4. convert memory pointer to fn type using `transmute`
 5. execute fn
 
+## module_stomping
+SHELLCODE execute remotely.
+inject `notepad.exe` by default.
+1. get pid by process name using crate `sysinfo`
+2. get handle using `OpenProcess`
+3. alloc remote memory using `VirtualAllocEx`
+4. copy dll path to allocated memory using `WriteProcessMemory`
+5. get `LoadLibraryA` addr using `GetProcAddress` with `GetModuleHandleA`
+6. load dll using `CreateRemoteThread`
+7. wait created remote thread using `WaitForSingleObject`
+8. get modules using `EnumProcessModules`
+9. get module name using `GetModuleBaseNameA`
+10. alloc memory using `HeapAlloc`
+11. get entry_point using `ReadProcessMemory`
+12. copy SHELLCODE to dll entry_point using `WriteProcessMemory`
+13. execute SHELLCODE using `CreateRemoteThread`
+14. close opened handle using `CloseHandle`
+
 ## nt_queue_apc_thread_ex_local
 SHELLCODE execute locally.
-1. get `NtQueueApcThreadEx` funtion from `ntdll` using `LoadLibraryA` and `GetProcAddress`
+1. get `NtQueueApcThreadEx` function from `ntdll` using `LoadLibraryA` and `GetProcAddress`
 2. alloc remote memory using `VirtualAlloc`
 3. copy SHELLCODE to allocated memory using `std::ptr::copy`
 4. change memory permission to executable using `VirtualProtect`
@@ -129,7 +148,7 @@ SHELLCODE execute locally.
 6. execute SHELLCODE using `NtQueueApcThreadEx`
 
 ## rtl_create_user_thread
-SHELLCODE execute remotely.  
+SHELLCODE execute remotely.
 inject `explorer.exe` by default.
 1. get `RtlCreateUserThread` funtion from `ntdll` using `LoadLibraryA` and `GetProcAddress`
 2. get pid by process name using crate `sysinfo`

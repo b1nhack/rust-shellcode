@@ -2,7 +2,7 @@ use std::ffi::{c_void, CStr};
 use std::mem::{size_of, size_of_val, transmute, zeroed};
 use std::ptr::{addr_of_mut, null, null_mut};
 use sysinfo::{PidExt, ProcessExt, System, SystemExt};
-use windows_sys::Win32::Foundation::{GetLastError, FALSE, HMODULE, WAIT_FAILED};
+use windows_sys::Win32::Foundation::{CloseHandle, GetLastError, FALSE, HMODULE, WAIT_FAILED};
 use windows_sys::Win32::System::Diagnostics::Debug::{
     ReadProcessMemory, WriteProcessMemory, IMAGE_NT_HEADERS64,
 };
@@ -122,6 +122,8 @@ fn main() {
                     null_mut(),
                 );
             };
+
+            CloseHandle(handle);
         }
     }
 }
