@@ -63,7 +63,7 @@ SHELLCODE execute locally.
 14. close opened handle using `CloseHandle`
 
 ## create_remote_thread
-SHELLCODE execute remotely.
+SHELLCODE execute remotely.  
 inject `explorer.exe` by default.
 1. get pid by process name using crate `sysinfo`
 2. get handle using `OpenProcess`
@@ -74,7 +74,7 @@ inject `explorer.exe` by default.
 7. close opened handle using `CloseHandle`
 
 ## create_remote_thread_native
-SHELLCODE execute remotely.
+SHELLCODE execute remotely.  
 inject `explorer.exe` by default.  
 this is same with [create_remote_thread](#create_remote_thread), but without crate `windows-sys`  
 using crate `libloading` get functions from dlls.
@@ -93,7 +93,7 @@ this is same with [create_thread](#create_thread), but without crate `windows-sy
 using crate `libloading` get functions from dlls.
 
 ## early_bird
-SHELLCODE execute remotely.
+SHELLCODE execute remotely.  
 create and inject `svchost.exe` by default.
 1. create a process using `CreateProcessA`
 2. alloc remote memory using `VirtualAllocEx`
@@ -121,7 +121,7 @@ SHELLCODE execute locally.
 5. execute fn
 
 ## module_stomping
-SHELLCODE execute remotely.
+SHELLCODE execute remotely.  
 inject `notepad.exe` by default.
 1. get pid by process name using crate `sysinfo`
 2. get handle using `OpenProcess`
@@ -148,7 +148,7 @@ SHELLCODE execute locally.
 6. execute SHELLCODE using `NtQueueApcThreadEx`
 
 ## rtl_create_user_thread
-SHELLCODE execute remotely.
+SHELLCODE execute remotely.  
 inject `explorer.exe` by default.
 1. get `RtlCreateUserThread` funtion from `ntdll` using `LoadLibraryA` and `GetProcAddress`
 2. get pid by process name using crate `sysinfo`
