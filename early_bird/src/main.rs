@@ -1,5 +1,3 @@
-#![windows_subsystem = "windows"]
-
 use std::mem::{transmute, zeroed};
 use std::ptr::{null, null_mut};
 use windows_sys::Win32::Foundation::{CloseHandle, GetLastError, FALSE, TRUE};

@@ -1,5 +1,3 @@
-#![windows_subsystem = "windows"]
-
 use std::mem::transmute;
 use std::ptr::{copy, null, null_mut};
 use windows_sys::Win32::Foundation::{GetLastError, FALSE, WAIT_FAILED};

@@ -1,5 +1,3 @@
-#![windows_subsystem = "windows"]
-
 use memmap2::MmapOptions;
 use std::mem::transmute;
 

@@ -1,5 +1,3 @@
-#![windows_subsystem = "windows"]
-
 use std::ffi::{c_char, c_void};
 use std::mem::{size_of_val, zeroed};
 use std::ptr::{addr_of, addr_of_mut, null, null_mut};

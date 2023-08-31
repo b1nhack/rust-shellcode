@@ -182,6 +182,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "module_stomping"
+version = "0.1.0"
+dependencies = [
+ "sysinfo",
+ "windows-sys",
+]
+
+[[package]]
 name = "nt_queue_apc_thread_ex_local"
 version = "0.1.0"
 dependencies = [

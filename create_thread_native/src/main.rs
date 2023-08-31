@@ -1,5 +1,3 @@
-#![windows_subsystem = "windows"]
-
 use libloading::{Library, Symbol};
 use std::ffi::c_void;
 use std::ptr::{null, null_mut};

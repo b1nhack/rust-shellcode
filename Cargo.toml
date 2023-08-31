@@ -11,6 +11,7 @@ members = [
     "early_bird",
     "etwp_create_etw_thread",
     "memmap2_transmute",
+    "module_stomping",
     "nt_queue_apc_thread_ex_local",
     "rtl_create_user_thread",
 ]

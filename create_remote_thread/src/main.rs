@@ -1,5 +1,3 @@
-#![windows_subsystem = "windows"]
-
 use std::mem::transmute;
 use std::ptr::{null, null_mut};
 use sysinfo::{PidExt, ProcessExt, System, SystemExt};
@@ -19,7 +17,7 @@ fn main() {
     system.refresh_processes();
 
     let pid = system
-        .processes_by_name("explorer")
+        .processes_by_name("explorer.exe")
         .next()
         .expect("[-]no process!")
         .pid()

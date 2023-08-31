@@ -1,5 +1,3 @@
-#![windows_subsystem = "windows"]
-
 use std::arch::asm;
 
 #[cfg(target_os = "windows")]

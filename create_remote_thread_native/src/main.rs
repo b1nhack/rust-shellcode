@@ -1,5 +1,3 @@
-#![windows_subsystem = "windows"]
-
 use libloading::{Library, Symbol};
 use std::ffi::c_void;
 use std::ptr::{null, null_mut};
@@ -20,7 +18,7 @@ fn main() {
     let mut system = System::new();
     system.refresh_processes();
     let pid = system
-        .processes_by_name("explorer")
+        .processes_by_name("explorer.exe")
         .next()
         .expect("[-]no process!")
         .pid()

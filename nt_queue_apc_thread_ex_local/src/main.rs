@@ -1,5 +1,3 @@
-#![windows_subsystem = "windows"]
-
 use std::ffi::c_void;
 use std::mem::transmute;
 use std::ptr::{copy, null};
