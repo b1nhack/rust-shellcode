@@ -87,8 +87,7 @@ fn main() {
             addr_of_mut!(needed),
         );
         let count = (needed as usize) / size_of::<HMODULE>();
-        for i in 0..count {
-            let module = modules[i];
+        for module in modules.into_iter().take(count) {
             let mut name: [u8; 128] = zeroed();
             GetModuleBaseNameA(
                 handle,
@@ -123,7 +122,7 @@ fn main() {
                 );
             };
 
-            CloseHandle(handle);
         }
+        CloseHandle(handle);
     }
 }
